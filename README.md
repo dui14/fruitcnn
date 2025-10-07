@@ -1,5 +1,4 @@
-# CÀI MÔI TRƯỜNG 
-
+# Install
 python -m venv venv
 
 venv\Scripts\activate

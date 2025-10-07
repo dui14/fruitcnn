@@ -10,6 +10,11 @@ data/train/*
 data/test/*
 data/predict/*
 
+!data/train/.gitkeep
+!data/test/.gitkeep
+!data/predict/.gitkeep
+
+
 # Model files (sinh ra sau khi train)
 model/*.h5
 model/*.pt
