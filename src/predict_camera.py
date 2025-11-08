@@ -9,7 +9,7 @@ import time
 
 # CẤU HÌNH
 IMG_SIZE = (100, 100)
-MODEL_PATH = '../models/model/quick_model.h5'  # Đường dẫn model
+MODEL_PATH = '../models/model/fruit_model_full.h5'  # Đường dẫn model
 FRUIT_INFO_PATH = '../data/fruit_info.json'  # Đường dẫn json
 FRUIT_CLASSES_PATH = '../data/fruit_classes.txt'  # Đường dẫn class names
 
