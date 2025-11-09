@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍎 Hệ Thống Nhận Diện Trái Cây - Flask</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .upload-area {
+            padding: 20px;
+            border: 2px dashed #3498db;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            text-align: center; /* Căn giữa nút bấm và input */
+        }
+        .upload-area input[type="file"] {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+        }
+        .upload-area input[type="submit"] {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .result-box {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            background-color: #ecf0f1;
+        }
+        .result-box h2 {
+            color: #2980b9;
+            margin-top: 0;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+        .data-item strong {
+            display: inline-block;
+            width: 150px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🔍 Hệ Thống Nhận Diện Trái Cây</h1>
+
+        <form method="GET" action="{{ url_for('index.predict') }}" enctype="multipart/form-data">
+            <div class="upload-area">
+                <label for="file-upload">Chọn ảnh trái cây để phân tích:</label>
+                <input type="file" id="file-upload" name="fruit_image" accept="image/*" required>
+                <input type="submit" value="Phân tích">
+            </div>
+        </form>
+
+        <div class="result-box" id="analysis-results">
+            <h2>✨ Kết Quả Phân Tích</h2>
+            
+            {% if result %}
+                <div id="fruit-data">
+                    <div class="data-item">
+                        <strong>Trái Cây Nhận Diện:</strong> 
+                        <span id="fruit-name">{{ result.name }}</span> 
+                        (<span id="fruit-confidence">{{ result.confidence }}</span>)
+                    </div>
+                    
+                    <hr>
+
+                    <h3>📊 Đặc Điểm Dinh Dưỡng</h3>
+                    <div class="data-item">
+                        <strong>Năng lượng:</strong> 
+                        <span id="nutrition-calories">{{ result.nutrition.calories }}</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>Thành phần chính:</strong> 
+                        <span id="nutrition-details">{{ result.nutrition.details }}</span>
+                    </div>
+                    
+                    <hr>
+
+                    <h3>🎯 Phân Loại Chất Lượng</h3>
+                    <div class="data-item">
+                        <strong>Phân loại:</strong> 
+                        <span id="grade">{{ result.classification.grade }}</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>Tiêu chí:</strong> 
+                        <span id="criteria">{{ result.classification.criteria }}</span>
+                    </div>
+
+                    <hr>
+
+                    <h3>🚨 Nhận Diện Khuyết Tật</h3>
+                    <div class="data-item">
+                        <strong>Độ Chín:</strong> 
+                        <span id="ripeness">{{ result.defects.ripeness }}</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>Dập/Tổn thương:</strong> 
+                        <span id="bruise">{{ result.defects.bruise }}</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>Khác:</strong> 
+                        <span id="defect-other">{{ result.defects.other }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <p id="initial-message">Vui lòng tải lên một bức ảnh và nhấn "Phân tích" để nhận kết quả.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
