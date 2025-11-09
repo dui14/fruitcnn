@@ -31,7 +31,7 @@
             border: 2px dashed #3498db;
             border-radius: 5px;
             margin-bottom: 30px;
-            text-align: center; /* Căn giữa nút bấm và input */
+            text-align: center;
         }
         .upload-area input[type="file"] {
             display: block;
@@ -48,6 +48,17 @@
             font-size: 16px;
             margin-top: 10px;
         }
+        .upload-area input[type="submit"]:hover {
+            background-color: #27ae60;
+        }
+        .error-message {
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
         .result-box {
             border: 1px solid #e0e0e0;
             padding: 15px;
@@ -61,81 +72,101 @@
             border-bottom: 1px solid #bdc3c7;
             padding-bottom: 5px;
         }
+        .data-item {
+            margin: 10px 0;
+        }
         .data-item strong {
             display: inline-block;
             width: 150px;
             color: #2c3e50;
         }
+        hr {
+            border: none;
+            border-top: 1px solid #bdc3c7;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>🔍 Hệ Thống Nhận Diện Trái Cây</h1>
+<div class="container">
+    <h1>🔍 Hệ Thống Nhận Diện Trái Cây</h1>
 
-        <form method="GET" action="{{ url_for('index.predict') }}" enctype="multipart/form-data">
-            <div class="upload-area">
-                <label for="file-upload">Chọn ảnh trái cây để phân tích:</label>
-                <input type="file" id="file-upload" name="fruit_image" accept="image/*" required>
-                <input type="submit" value="Phân tích">
-            </div>
-        </form>
-
-        <div class="result-box" id="analysis-results">
-            <h2>✨ Kết Quả Phân Tích</h2>
-            
-            {% if result %}
-                <div id="fruit-data">
-                    <div class="data-item">
-                        <strong>Trái Cây Nhận Diện:</strong> 
-                        <span id="fruit-name">{{ result.name }}</span> 
-                        (<span id="fruit-confidence">{{ result.confidence }}</span>)
-                    </div>
-                    
-                    <hr>
-
-                    <h3>📊 Đặc Điểm Dinh Dưỡng</h3>
-                    <div class="data-item">
-                        <strong>Năng lượng:</strong> 
-                        <span id="nutrition-calories">{{ result.nutrition.calories }}</span>
-                    </div>
-                    <div class="data-item">
-                        <strong>Thành phần chính:</strong> 
-                        <span id="nutrition-details">{{ result.nutrition.details }}</span>
-                    </div>
-                    
-                    <hr>
-
-                    <h3>🎯 Phân Loại Chất Lượng</h3>
-                    <div class="data-item">
-                        <strong>Phân loại:</strong> 
-                        <span id="grade">{{ result.classification.grade }}</span>
-                    </div>
-                    <div class="data-item">
-                        <strong>Tiêu chí:</strong> 
-                        <span id="criteria">{{ result.classification.criteria }}</span>
-                    </div>
-
-                    <hr>
-
-                    <h3>🚨 Nhận Diện Khuyết Tật</h3>
-                    <div class="data-item">
-                        <strong>Độ Chín:</strong> 
-                        <span id="ripeness">{{ result.defects.ripeness }}</span>
-                    </div>
-                    <div class="data-item">
-                        <strong>Dập/Tổn thương:</strong> 
-                        <span id="bruise">{{ result.defects.bruise }}</span>
-                    </div>
-                    <div class="data-item">
-                        <strong>Khác:</strong> 
-                        <span id="defect-other">{{ result.defects.other }}</span>
-                    </div>
-                </div>
-            {% else %}
-                <p id="initial-message">Vui lòng tải lên một bức ảnh và nhấn "Phân tích" để nhận kết quả.</p>
-            {% endif %}
-        </div>
+    {% if error %}
+    <div class="error-message">
+        ⚠️ {{ error }}
     </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('index.predict') }}" enctype="multipart/form-data">
+        <div class="upload-area">
+            <label for="file-upload">Chọn ảnh trái cây để phân tích:</label>
+            <input type="file" id="file-upload" name="fruit_image" accept="image/*" onchange="showImage(this)">
+            
+            <!-- Luôn hiển thị khung preview -->
+            <div id="preview-box" style="margin-top: 20px; display: block;">
+                <p style="color: #2980b9; font-weight: bold;">📷 Ảnh đã chọn:</p>
+                <img 
+                    id="preview-img" 
+                    src="{% if result and result.image_url %}{{ result.image_url }}{% endif %}" 
+                    alt="Preview" 
+                    style="max-width: 400px; max-height: 400px; border-radius: 8px; border: 2px solid #3498db; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                >
+            </div>
+
+            <input type="submit" value="Phân tích">
+        </div>
+    </form>
+
+    <div class="result-box" id="analysis-results">
+        <h2>✨ Kết Quả Phân Tích</h2>
+        
+        {% if result %}
+            <div id="fruit-data">
+                <div class="data-item">
+                    <strong>Nhận Diện:</strong> 
+                    <span id="fruit-name">{{ result.name }}</span> 
+                   
+                </div>
+                <div class="data-item">
+                    <strong>Chất lượng ảnh:</strong> 
+                   <span id="fruit-confidence">{{ result.confidence.grade }}</span>
+                </div>
+                 <div class="data-item">
+                    <strong>Độ tin cậy:</strong> 
+                   <span id="fruit-confidence">{{ result.confidence.criteria }}</span>
+                </div>
+                
+                <hr>
+
+                <h3>📊 Đặc Điểm Dinh Dưỡng</h3>
+                <div class="data-item">
+                    <strong>Năng lượng:</strong> 
+                    <span id="nutrition-calories">{{ result.nutrition.calories }}</span>
+                </div>
+                <div class="data-item">
+                    <strong>Thành phần chính:</strong> 
+                    <span id="nutrition-details">{{ result.nutrition.desc }}</span>
+                </div>
+            </div>
+        {% else %}
+            <p id="initial-message">Vui lòng tải lên một bức ảnh và nhấn "Phân tích" để nhận kết quả.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function showImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('preview-box').style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+
 </body>
 </html>
