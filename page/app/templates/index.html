@@ -12,7 +12,7 @@
             color: #333;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
             background: #fff;
             padding: 30px;
@@ -26,6 +26,41 @@
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
+        
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .tab-button {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            color: #7f8c8d;
+            transition: all 0.3s;
+        }
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            font-weight: bold;
+        }
+        .tab-button:hover {
+            color: #2980b9;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
         .upload-area {
             padding: 20px;
             border: 2px dashed #3498db;
@@ -38,7 +73,7 @@
             margin: 10px auto;
             padding: 10px;
         }
-        .upload-area input[type="submit"] {
+        .upload-area input[type="submit"], .btn {
             background-color: #2ecc71;
             color: white;
             padding: 10px 20px;
@@ -48,11 +83,58 @@
             font-size: 16px;
             margin-top: 10px;
         }
-        .upload-area input[type="submit"]:hover {
+        .upload-area input[type="submit"]:hover, .btn:hover {
             background-color: #27ae60;
         }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-primary {
+            background-color: #3498db;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        /* Camera Section */
+        .camera-container {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        #camera-feed {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        #camera-feed.active {
+            display: block;
+            width:100%;
+            box-sizing: border-box;
+        }
+        .camera-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
         .error-message {
             background-color: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .success-message {
+            background-color: #2ecc71;
             color: white;
             padding: 10px;
             border-radius: 5px;
@@ -85,6 +167,13 @@
             border-top: 1px solid #bdc3c7;
             margin: 20px 0;
         }
+        #preview-img {
+            max-width: 400px;
+            max-height: 400px;
+            border-radius: 8px;
+            border: 2px solid #3498db;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -92,70 +181,81 @@
 <div class="container">
     <h1>🔍 Hệ Thống Nhận Diện Trái Cây</h1>
 
-    {% if error %}
-    <div class="error-message">
-        ⚠️ {{ error }}
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+        <button class="tab-button active" onclick="switchTab('upload')">📤 Upload Ảnh</button>
+        <button class="tab-button" onclick="switchTab('camera')">📹 Camera Realtime</button>
     </div>
+
+    {% if error %}
+    <div id="error-message"   class="error-message">
+        {{ error }}
+    </div>
+    <script>
+        setTimeout(()=>{
+            const errorDiv = document.getElementById('error-message');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        },3000)
+    </script>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('index.predict') }}" enctype="multipart/form-data">
-        <div class="upload-area">
-            <label for="file-upload">Chọn ảnh trái cây để phân tích:</label>
-            <input type="file" id="file-upload" name="fruit_image" accept="image/*" onchange="showImage(this)">
-            
-            <!-- Luôn hiển thị khung preview -->
-            <div id="preview-box" style="margin-top: 20px; display: block;">
-                <p style="color: #2980b9; font-weight: bold;">📷 Ảnh đã chọn:</p>
-                <img 
-                    id="preview-img" 
-                    src="{% if result and result.image_url %}{{ result.image_url }}{% endif %}" 
-                    alt="Preview" 
-                    style="max-width: 400px; max-height: 400px; border-radius: 8px; border: 2px solid #3498db; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
-                >
-            </div>
-
-            <input type="submit" value="Phân tích">
-        </div>
-    </form>
-
-    <div class="result-box" id="analysis-results">
-        <h2>✨ Kết Quả Phân Tích</h2>
-        
-        {% if result %}
-            <div id="fruit-data">
-                <div class="data-item">
-                    <strong>Nhận Diện:</strong> 
-                    <span id="fruit-name">{{ result.name }}</span> 
-                   
-                </div>
-                <div class="data-item">
-                    <strong>Chất lượng ảnh:</strong> 
-                   <span id="fruit-confidence">{{ result.confidence.grade }}</span>
-                </div>
-                 <div class="data-item">
-                    <strong>Độ tin cậy:</strong> 
-                   <span id="fruit-confidence">{{ result.confidence.criteria }}</span>
-                </div>
+    <!-- TAB 1: Upload Ảnh -->
+    <div id="upload-tab" class="tab-content active">
+        <form method="POST" action="{{ url_for('index.predict') }}" enctype="multipart/form-data">
+            <div class="upload-area">
+                <label for="file-upload">Chọn ảnh trái cây để phân tích:</label>
+                <input type="file" id="file-upload" name="fruit_image" accept="image/*" onchange="showImage(this)">
                 
-                <hr>
-
-                <h3>📊 Đặc Điểm Dinh Dưỡng</h3>
-                <div class="data-item">
-                    <strong>Năng lượng:</strong> 
-                    <span id="nutrition-calories">{{ result.nutrition.calories }}</span>
+                <div id="preview-box" style="margin-top: 20px; display: block;">
+                    <p style="color: #2980b9; font-weight: bold;">📷 Ảnh đã chọn:</p>
+                    <img 
+                        id="preview-img" 
+                        src="{% if result and result.image_url %}{{ result.image_url }}{% endif %}" 
+                        alt="Preview"
+                    >
                 </div>
-                <div class="data-item">
-                    <strong>Thành phần chính:</strong> 
-                    <span id="nutrition-details">{{ result.nutrition.desc }}</span>
-                </div>
+                <input type="submit" value="Phân tích">
             </div>
-        {% else %}
-            <p id="initial-message">Vui lòng tải lên một bức ảnh và nhấn "Phân tích" để nhận kết quả.</p>
-        {% endif %}
+        </form>
+    </div>
+
+    <!-- TAB 2: Camera Realtime -->
+    <div id="camera-tab" class="tab-content">
+        <div class="camera-container">
+            <h3>📹 Camera Realtime Detection</h3>
+            <img id="camera-feed" src="{{ url_for('index.video_feed') }}" alt="Camera Feed">
+            
+            <div class="camera-controls">
+                <button class="btn btn-primary" onclick="startCamera()">▶️ Bật Camera</button>
+                <button class="btn btn-danger" onclick="stopCamera()">⏸️ Tắt Camera</button>
+                <button class="btn" onclick="captureFrame()">📸 Chụp Ảnh</button>
+            </div>
+            <div id="camera-message" style="margin-top: 15px;"></div>
+        </div>
     </div>
 </div>
 
 <script>
+    let cameraActive = false;
+
+    // Tab switching
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        
+        if (tab === 'upload') {
+            document.getElementById('upload-tab').classList.add('active');
+            document.querySelectorAll('.tab-button')[0].classList.add('active');
+            if (cameraActive) stopCamera();
+        } else if (tab === 'camera') {
+            document.getElementById('camera-tab').classList.add('active');
+            document.querySelectorAll('.tab-button')[1].classList.add('active');
+        }
+    }
+
+    // Upload tab: Show image preview
     function showImage(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
@@ -166,6 +266,86 @@
             reader.readAsDataURL(input.files[0]);
         }
     }
+
+    // Camera controls
+    function startCamera() {
+        fetch("{{ url_for('index.predict_camera') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'start'})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                cameraActive = true;
+                document.getElementById('camera-feed').classList.add('active');
+                showMessage('✅ Camera đã bật!', 'success');
+            }
+        })
+        .catch(error => {
+            showMessage('❌ Lỗi khi bật camera: ' + error, 'error');
+        });
+    }
+
+    function stopCamera() {
+        fetch("{{ url_for('index.predict_camera') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'stop'})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                cameraActive = false;
+                document.getElementById('camera-feed').classList.remove('active');
+                showMessage('⏸️ Camera đã tắt!', 'success');
+            }
+        });
+    }
+
+    function captureFrame() {
+        if (!cameraActive) {
+            showMessage('⚠️ Vui lòng bật camera trước!', 'error');
+            return;
+        }
+
+        fetch("{{ url_for('index.capture_frame') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showMessage(`Phát hiện: ${data.class} (${data.confidence})`, 'success');
+                
+                // Hiển thị ảnh đã chụp
+                document.getElementById('preview-img').src = data.image_url;
+                
+                // Update kết quả
+                updateResults(data);
+            } else if (data.status === 'no_detection') {
+                showMessage( data.message, 'error');
+            } else {
+                showMessage(data.message, 'error');
+            }
+        });
+    }
+
+    function showMessage(message, type) {
+        const msgDiv = document.getElementById('camera-message');
+        msgDiv.innerHTML = `<div class="${type}-message">${message}</div>`;
+        setTimeout(() => msgDiv.innerHTML = '', 3000);
+    }
+
+    function updateResults(data) {
+        const resultsBox = document.getElementById('fruit-data');
+        if (resultsBox) {
+            document.getElementById('fruit-name').textContent = data.class;
+            document.getElementById('fruit-confidence').textContent = data.confidence;
+        }
+    }
+
+
 </script>
 
 </body>
